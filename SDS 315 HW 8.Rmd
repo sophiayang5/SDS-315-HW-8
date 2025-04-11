@@ -1,0 +1,95 @@
+---
+title: "SDS 315 HW 8"
+subtitle: ""
+author: "Sophia Yang (sy23928)"
+output:
+  pdf_document:
+    toc: true
+    toc_depth: 5
+    number_sections: false
+date: "2025-04-09"
+---
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
+library(ggplot2)
+library(tidyverse)
+library(mosaic)
+```
+
+\newpage
+# Problem 1: Regression Warm Up
+```{r, include = FALSE}
+creatinine <- read.csv("creatinine.csv")
+```
+
+## Part A)
+```{r, include = FALSE}
+# create the linear regression model
+creatlm = lm(creatclear ~ age, data = creatinine)
+coef(creatlm)
+```
+For a 55-year old, we expect the creatinine clearance rate to be 113.71. I determined this by finding the equation for the linear regression model, which is y = 147.81 - 0.62 * age, and plugging in 55 for age.
+
+## Part B)
+The creatinine clearance rate decreases at rate of 0.62 mL/minute/year. I determined this by finding the slope of the linear regression model for creatinine clearance rate predicted by age.
+
+## Part C)
+The 40-year-old's creatinine clearance rate is healthier for their age. I determined this by calculating the expected clearance rates for the 40-year-old and the 60-year-old with the linear regression equation (y = 147.81 - 0.62 * age): the 40-year-old's expected rate was 123.01, and the 60-year-old's expected rate was 110.61. Then, I took the difference between their actual rates and their expected rates: the 40-year-old's difference was 11.99, and the 60-year-old's was 1.39. Finally, I chose the person with the greater positive difference, which was the 40-year-old.
+
+\newpage
+# Problem 2: Modeling Disease Growth
+```{r}
+covid <- read.csv("covid.csv")
+```
+
+```{r, include = FALSE}
+# filter for Italy
+italy = filter(covid, country == "Italy")
+# create the exponential model
+italy_lm = lm(log(deaths) ~ days_since_first_death, data = italy)
+coef(italy_lm)
+
+# find the bootstrapped confints
+boot_italy_lm = do(10000)*lm(log(deaths) ~ days_since_first_death, data = mosaic::resample(italy))
+confint(boot_italy_lm, level = 0.95)
+
+
+# filter for Spain
+spain = filter(covid, country == "Spain")
+# create the exponential model
+spain_lm = lm(log(deaths) ~ days_since_first_death, data = spain)
+coef(spain_lm)
+
+# find the bootstrapped confints
+boot_spain_lm = do(10000)*lm(log(deaths) ~ days_since_first_death, data = mosaic::resample(spain))
+confint(boot_spain_lm, level = 0.95)
+```
+For Italy, the estimated growth rate is 0.183, with a bootstrapped 95% confidence interval of (0.159, 0.208), while the estimated doubling time is 3.8 days, with a 95% confidence interval of (3.4, 4.4).
+
+For Spain, the estimated growth rate is 0.276, with a bootstrapped 95% confidence interval of (0.234, 0.318), while the estimated doubling time is 2.5 days, with a 95% confidence interval of (2.2, 3.0).
+
+```{r}
+# line graph showing reported daily deaths over time
+ggplot(covid) + geom_line(aes(x = days_since_first_death, y = deaths, color = country)) +
+  labs(
+    title = "Relationship Between COVID Deaths and Time",
+    x = "Days Since 1st Death",
+    y = "Deaths",
+    color = "Country:"
+  )
+```
+
+\newpage
+# Problem 3: Price Elasticity of Demand
+```{r, include = FALSE}
+milk <- read.csv("milk.csv")
+
+# create the power law model
+milk_lm = lm(log(sales) ~ log(price), data = milk)
+coef(milk_lm)
+
+# find the bootstrapped confint
+boot_milk_lm = do(10000)*lm(log(sales) ~ log(price), data = mosaic::resample(milk))
+confint(boot_milk_lm, level = 0.95)
+```
+The estimated price elasticity of demand for milk is -1.62, with a bootstrapped 95% confidence interval of (-1.77, -1.46). To estimate the elasticity, I created a linear regression model for the log of sales predicted by the log of prices; thus, the coefficient of -1.62 would be the estimated price elasticity. Additionally, I repeatedly resampled from the dataset and created those linear regression models for each sample to find the boostrapped 95% confidence interval of (-1.77, -1.46).
